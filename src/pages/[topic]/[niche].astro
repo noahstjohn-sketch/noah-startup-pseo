@@ -1,0 +1,38 @@
+---
+// src/pages/[topic]/[niche].astro
+// Static mode: prerenders one page per (atomic topic) x niche.
+// Longtail topics (including vs comparisons): no cross pages emitted.
+import Base from '../../layouts/Base.astro';
+import PageTemplate from '../../components/PageTemplate.astro';
+import { topics } from '../../data/topics.js';
+import { niches } from '../../data/niches.js';
+import { buildPageData } from '../../lib/page-data.js';
+
+const BUYER_SINGULAR = 'startup founder';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const topic of topics) {
+    if (topic.kind !== 'atomic') continue;
+    for (const niche of niches) {
+      paths.push({
+        params: { topic: topic.slug, niche: niche.slug },
+        props: { topic, niche },
+      });
+    }
+  }
+  return paths;
+}
+
+const { topic, niche } = Astro.props;
+if (!topic || !niche) return new Response(null, { status: 404 });
+
+const { faq, faqSchema, aboutText } = buildPageData(topic, niche, { buyerSingular: BUYER_SINGULAR });
+
+const title = `${topic.label} for ${niche.label} | Dr. Noah St. John | Neural Performance Architect`;
+const description = `${topic.label} for ${niche.label}: Release the Invisible Brake capping startup founders. Dr. Noah St. John. 28 years. $3 billion in client results.`;
+const canonical = `https://startup.noahstjohn.com/${topic.slug}/${niche.slug}`;
+---
+<Base title={title} description={description} canonical={canonical} faqSchema={faqSchema}>
+  <PageTemplate topic={topic} niche={niche} faq={faq} aboutText={aboutText} />
+</Base>
